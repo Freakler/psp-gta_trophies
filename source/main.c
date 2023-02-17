@@ -303,7 +303,7 @@ void trophy() {
           } break;
         
         case 0x10A: /// "Grand Theft Auto" 
-          if( getInt(global_exportedVehicles) > 0 && (getInt(global_exportedVehicles) == getInt(global_exportVehicTotal)) ) { 
+          if( getInt(global_exportedVehicles + (LCS ? 0 : gp)) > 0 && (getInt(global_exportedVehicles + (LCS ? 0 : gp)) == getInt(global_exportVehicTotal + (LCS ? 0 : gp))) ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
         
@@ -548,7 +548,7 @@ void DrawBrief_patched(int param_1) {
       SetDropShadowPosition(0);
       
       /// draw title
-      SetFontStyle(0);
+      SetFontStyle(0); // 2
       SetScale_LCS(0.36432,0.792);
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
       color = adjustColor(color, 65.0f + position + cur);
@@ -574,8 +574,8 @@ void DrawBrief_patched(int param_1) {
       SetTextOriginPoint(3); // left
         
       /// draw Title
-      SetFontStyle(0); //SetFontStyle(2);
-      SetScale_VCS(0.7f); //SetScale_VCS(0.4f);  
+      SetFontStyle(2); //SetFontStyle(0);
+      SetScale_VCS(0.4f); //SetScale_VCS(0.7f);
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
       color = adjustColor(color, 65.0f + position + cur);
       SetColor(&color);
