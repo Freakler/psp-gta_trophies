@@ -97,7 +97,7 @@ trophies_pack trophies[] = {
   {0x102, 0, "You picked the wrong house fool!",       "Try walk into the wrong savehouse" }, // "Eddies Garage" LCS / "OceanView Hotel" VCS
   {0x103, 0, "Wanted!",                                "Reach 6 Wanted Stars level" }, 
   {0x104, 0, "Tank'jackin!",                           "Get into a Rhino" }, // get in a tank
-  {0x105, 0, "No Escape",                             "?" }, // reach the map border
+  {0x105, 0, "No Escape!",                             "?" }, // reach the map border
   {0x106, 0, "Done it all!",                           "100% complete the game" }, //
   {0x107, 0, "Full house!",                            "Fill all Garages to the max" }, // Portland 1, Staunton 2, Shoreside 3 (12 max) & 101Baysh. 1, Compound 1, Clym. 3 (12 max)
   {0x108, 0, "Stuntman!",                              "Complete all Unique Stunt Jumps" }, // LCS 26 & VCS 30
@@ -115,8 +115,8 @@ trophies_pack trophies[] = {
   
   /// VCS only //////////////
   {0x300, 0, "There are no Easter Eggs up here!",      "?" }, // Jump against Easteregg Window from Helipad
-  {0x301, 0, "Ah shit, here we go again...",             "Drive a BMX while wearing the trailer trash outfit" },
-  {0x302, 0, "In the skies!",                       "Fly higher than the game's limit" }, // 
+  {0x301, 0, "Ah shit, here we go again...",           "Drive a BMX while wearing the trailer trash outfit" },
+  {0x302, 0, "In the skies!",                          "Fly higher than the game's limit" }, // 
   {0x303, 0, "Fun Ride!",                              "Use the Ferris wheel" }, // 
   {0x304, 0, "Empire much!",                           "Acquire all Business sites" }, // 
 
