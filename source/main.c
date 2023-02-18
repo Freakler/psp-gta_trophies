@@ -92,12 +92,12 @@ u32 global_dialog_string          = -1; // LCS only
 trophies_pack trophies[] = {
  
   // ID      // TITLE                                  // DESC
-  {0x100, 0, "Well, thats fast!",                      "Reach the top speed with a Vehicle of your choice" }, 
+  {0x100, 0, "Maximum Power!",                         "Reach the top speed with a vehicle of your choice" }, 
   {0x101, 0, "To Hell and Back!",                      "?" }, // Fall through map into hell
   {0x102, 0, "You picked the wrong house fool!",       "Try walk into the wrong savehouse" }, // "Eddies Garage" LCS / "OceanView Hotel" VCS
   {0x103, 0, "Wanted!",                                "Reach 6 Wanted Stars level" }, 
   {0x104, 0, "Tank'jackin!",                           "Get into a Rhino" }, // get in a tank
-  {0x105, 0, "No Escape!",                             "?" }, // reach the map border
+  {0x105, 0, "No Escape",                             "?" }, // reach the map border
   {0x106, 0, "Done it all!",                           "100% complete the game" }, //
   {0x107, 0, "Full house!",                            "Fill all Garages to the max" }, // Portland 1, Staunton 2, Shoreside 3 (12 max) & 101Baysh. 1, Compound 1, Clym. 3 (12 max)
   {0x108, 0, "Stuntman!",                              "Complete all Unique Stunt Jumps" }, // LCS 26 & VCS 30
@@ -115,8 +115,8 @@ trophies_pack trophies[] = {
   
   /// VCS only //////////////
   {0x300, 0, "There are no Easter Eggs up here!",      "?" }, // Jump against Easteregg Window from Helipad
-  {0x301, 0, "Ah shit, here we go again!",             "Drive a BMX while wearing the trailer trash outfit" },
-  {0x302, 0, "Above the limit!",                       "Fly higher than the game's limit" }, // 
+  {0x301, 0, "Ah shit, here we go again...",             "Drive a BMX while wearing the trailer trash outfit" },
+  {0x302, 0, "In the skies!",                       "Fly higher than the game's limit" }, // 
   {0x303, 0, "Fun Ride!",                              "Use the Ferris wheel" }, // 
   {0x304, 0, "Empire much!",                           "Acquire all Business sites" }, // 
 
@@ -179,6 +179,8 @@ int sceKernelSysClock2USecWidePatched(SceInt64 clock, unsigned *low, unsigned in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+// Unused for now
 void trophies_reset() {
   int i;
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
@@ -225,6 +227,7 @@ int trophies_getDoneCurrentGame() {
   return counter;
 }
 
+
 void congrats() {
    
   if( alldone ) // show congrats message only once
@@ -234,8 +237,8 @@ void congrats() {
     return;
 
   char buffer[128];
-  float duration = 10.00f; // duration the textbox should be displayed
-  sprintf(buffer, "Congratulations, you have unlocked all of the %d trophies!", trophies_getTotalCurrentGame());
+  float duration = 7.0f; // duration the textbox should be displayed
+  snprintf(buffer, sizeof(buffer), "~h~ALL %d TROPHIES EARNED!~w~", trophies_getTotalCurrentGame());
   setTimedTextbox(buffer, duration);
   alldone = 1;
 }
@@ -249,6 +252,9 @@ void trophy() {
   
   /// CHECK ////////////////////////////////////////////////////////////////////////
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
+    #ifdef DEBUG
+    trophies[i].unlocked = 2;
+    #endif  
     if( !trophies[i].unlocked ) {
       switch( trophies[i].id ) {
         
@@ -298,7 +304,7 @@ void trophy() {
           } break;
         
         case 0x109: /// "Drown" 
-          if( getPedDrowning(pplayer) && getPedHealth(pplayer) < 10.0f ) { 
+          if( getPedDrowning(pplayer) && getPedHealth(pplayer) == 0.0f ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
         
@@ -306,10 +312,7 @@ void trophy() {
           if( getInt(global_exportedVehicles + (LCS ? 0 : gp)) > 0 && (getInt(global_exportedVehicles + (LCS ? 0 : gp)) == getInt(global_exportVehicTotal + (LCS ? 0 : gp))) ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
-        
-        
-        
-    
+          
         
         /// LCS only //////////////
     
@@ -339,10 +342,6 @@ void trophy() {
           } break;
         
         
-    
-    
-        
-        
         /// VCS only //////////////
         
         case 0x300: /// "There are no Easter Eggs up here. Go away"
@@ -366,7 +365,7 @@ void trophy() {
           } break;
         
         case 0x304: /// "Empire much"
-          if( VCS && getNumberEmiresOwned() == 30 ) {
+          if( VCS && getNumberEmpiresOwned() == 30 ) {
             trophies[i].unlocked = 2; // unlocked
           } break;
         
@@ -381,12 +380,16 @@ void trophy() {
     return;
   
   char buffer[128];
-  char au[] = "You have earned a trophy.";
   float duration = 7.00f; // duration the textbox should be displayed
   
   for(i = 0; i < trophies_size; i++) { // loop trophies list
     if( trophies[i].unlocked == 2 ) { // check for "just unlocked"
-      sprintf(buffer, "~w~%s ~n~%s", au, trophies[i].title);
+
+      if (VCS) // LCS crashes if you join ~n~ and ~h~
+        snprintf(buffer, sizeof(buffer), "You have earned a trophy! ~n~~h~%s~w~", trophies[i].title);
+      else
+        snprintf(buffer, sizeof(buffer), "You have earned a trophy! ~n~ ~h~%s", trophies[i].title);
+
       trophies[i].unlocked = 1; // set "was displayed"
       goto triggertrophies; // trigger it then!
     }
@@ -438,9 +441,17 @@ void trophy() {
     
 }
 
-int adjustColor(u32 color, float coord) { /// alpha calc could be better and dynamic - ok for now
+int adjustColorLCS(u32 color, float coord) { /// alpha calc could be better and dynamic - ok for now
   if( coord < 60.0f ) color -= 0x99000000; // alpha text top bound
   if( coord < 55.0f ) color = 0x00000000; // disable text top bound
+  if( coord > 200.0f ) color -= 0x99000000; // alpha text bottom bound
+  if( coord > 206.0f ) color = 0x00000000; // disable text bottom bound
+  return color;
+}
+
+int adjustColorVCS(u32 color, float coord) { /// alpha calc could be better and dynamic - ok for now
+  if( coord < 70.0f ) color -= 0x99000000; // alpha text top bound
+  if( coord < 65.0f ) color = 0x00000000; // disable text top bound
   if( coord > 200.0f ) color -= 0x99000000; // alpha text bottom bound
   if( coord > 206.0f ) color = 0x00000000; // disable text bottom bound
   return color;
@@ -449,7 +460,7 @@ int adjustColor(u32 color, float coord) { /// alpha calc could be better and dyn
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 u32 addr_scrollval = 0;
-wchar_t trophystr[32] = L"Trophies";
+wchar_t trophystr[16] = L"Trophies";
 
 int (*CTextGet)(int **ctext, char *string);
 int CTextGet_patched(int **ctext, char *string) {
@@ -477,7 +488,7 @@ void DrawBrief_patched(int param_1) {
   static int mode = 1; // 1 / ON / Show all
   u32 color;
   wchar_t str[128] = L" ";
-  char string[256];
+  char string[128];
   
   static float position = 0.0f;
   if( LCS ) {
@@ -494,7 +505,7 @@ void DrawBrief_patched(int param_1) {
   }
   
   /// Header
-  sprintf(string, "PROGRESS: %.0f%%", ((float)trophies_getDoneCurrentGame() / (float)trophies_getTotalCurrentGame()) * 100.0f);
+  snprintf(string, sizeof(string), "PROGRESS: %.0f%%", ((float)trophies_getDoneCurrentGame() / (float)trophies_getTotalCurrentGame()) * 100.0f);
   AsciiToUnicode(string, str);
   if( LCS ) {
     SetFontStyle(1);
@@ -511,10 +522,10 @@ void DrawBrief_patched(int param_1) {
     color = 0xFFE3EC12; // Azure (not 100% correct)
     SetColor(&color);
     SetScale_VCS(0.6f);
-    PrintString_VCS(str, 0.0f, 40.0f);
+    PrintString_VCS(str, 0.0f, 50.0f);
   }
   
-  sprintf(string, "%d/%d UNLOCKED", trophies_getDoneCurrentGame(), trophies_getTotalCurrentGame());
+  snprintf(string, sizeof(string), "%d/%d UNLOCKED", trophies_getDoneCurrentGame(), trophies_getTotalCurrentGame());
   AsciiToUnicode(string, str);
   if( LCS ) {
     SetRightJustifyOn();
@@ -522,7 +533,7 @@ void DrawBrief_patched(int param_1) {
   }
   if( VCS ) {
     SetTextOriginPoint(4); // right
-    PrintString_VCS(str, SCREEN_WIDTH, 40.0f);
+    PrintString_VCS(str, SCREEN_WIDTH, 50.0f);
   }
   
   /// DEBUG
@@ -551,7 +562,7 @@ void DrawBrief_patched(int param_1) {
       SetFontStyle(0); // 2
       SetScale_LCS(0.36432,0.792);
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
-      color = adjustColor(color, 65.0f + position + cur);
+      color = adjustColorLCS(color, 65.0f + position + cur);
       SetColor(&color);
       sprintf(string, "%s", trophies[i].title);
       AsciiToUnicode(string, str);
@@ -560,7 +571,7 @@ void DrawBrief_patched(int param_1) {
       /// draw dec
       SetFontStyle(1);
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
-      color = adjustColor(color, 80.0f + position + cur); // WHITE
+      color = adjustColorLCS(color, 80.0f + position + cur); // WHITE
       SetColor(&color);
       sprintf(string, "%s", trophies[i].desc);
       AsciiToUnicode(string, str);
@@ -575,23 +586,23 @@ void DrawBrief_patched(int param_1) {
         
       /// draw Title
       SetFontStyle(2); //SetFontStyle(0);
-      SetScale_VCS(0.4f); //SetScale_VCS(0.7f);
-      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
-      color = adjustColor(color, 65.0f + position + cur);
+      SetScale_VCS(0.35f); //SetScale_VCS(0.7f);
+      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFEEEEEE;  //GREEN else WHITE (grayish)
+      color = adjustColorVCS(color, 75.0f + position + cur);
       SetColor(&color);
       sprintf(string, "%s", trophies[i].title);
       AsciiToUnicode(string, str);
-      PrintString_VCS(str, 0.0f, 65.0f + position + cur);
+      PrintString_VCS(str, 0.0f, 75.0f + position + cur);
     
       /// draw dec
       SetFontStyle(1);
       SetScale_VCS(0.5f);
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
-      color = adjustColor(color, 80.0f + position + cur); // WHITE
+      color = adjustColorVCS(color, 92.0f + position + cur); // WHITE
       SetColor(&color);
       sprintf(string, "%s", trophies[i].desc);
       AsciiToUnicode(string, str);
-      PrintString_VCS(str, 0.0f, 82.0f + position + cur);
+      PrintString_VCS(str, 0.0f, 92.0f + position + cur);
     
       cur+=42.0f;
     }
@@ -605,7 +616,7 @@ void DrawBrief_patched(int param_1) {
     }
   
     if( pad.Buttons & PSP_CTRL_UP ) {
-      if( -position < cur-162.0f ) // cur = trophies * 42.0f (162 is the screen space for display)
+      if( -position < cur-145.0f ) // cur = trophies * 42.0f (162 is the screen space for display)
         position -= 3.0f;
     }
   
@@ -616,7 +627,7 @@ void DrawBrief_patched(int param_1) {
   
   position += ystick * 8.00f; // scroll with stick
   if( position > 0.0f ) position = 0.0f;
-  if( -position > cur-162.0f ) position = (cur - 162.0f) * -1;
+  if( -position > cur-145.0f ) position = (cur - 145.0f) * -1;
   
   }
   old_buttons = buttons;
@@ -1454,9 +1465,11 @@ int module_start(SceSize argc, void* argp) {
     #ifdef LOG
     logPrintf("[INFO] PPSSPP detected!");
     #endif
+    #ifdef DEBUG
+    sceIoRemove("ms0:/PSP/PLUGINS/gta_trophies/gta_trophies.sav");
+    #endif
   }
-  
-  
+
   /// savefile
   if(argc > 0) { // on real hardware we use module_start's argp path to put the savefile next to the prx
     /// location depending on where prx is loaded from
