@@ -99,7 +99,7 @@ short getWeather() {
   return getShort(global_weather + (LCS ? 0 : gp));
 }
 
-char getNumberEmiresOwned() {
+char getNumberEmpiresOwned() {
   return getByte(global_empireowned + gp);
 }
 

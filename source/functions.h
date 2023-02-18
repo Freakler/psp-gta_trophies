@@ -27,7 +27,7 @@ unsigned char getPedID(int ped_base_adr);
 short getVehicleID(int vehicle_base_adr);
 short getWeather();
 int getWantedLevel(int ped_base_adr);
-char getNumberEmiresOwned();
+char getNumberEmpiresOwned();
 int getGarageVehicleActiveObjects(int base);
 void setTimedTextbox(const char *sentence, float duration);
 int isTextboxShowing();

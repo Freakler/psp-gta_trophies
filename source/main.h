@@ -21,6 +21,7 @@
 
 /** FLAGS ***********/
 #define LOG
+//#define DEBUG
 
 /********************/
 
