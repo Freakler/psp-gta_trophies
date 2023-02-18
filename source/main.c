@@ -78,6 +78,8 @@ u32 global_usjtotal         = -1;
 u32 global_exportedVehicles = -1;
 u32 global_exportVehicTotal = -1;
 u32 global_hitmankilled     = -1;
+u32 global_rampagesdone     = -1;
+u32 global_rampagestotal    = -1;
 
 u32 global_helpbox                = -1; // VCS only
 u32 global_helpbox_string         = -1; // LCS only
@@ -103,6 +105,7 @@ trophies_pack trophies[] = {
   {0x108, 0, "Stuntman!",                              "Complete all Unique Stunt Jumps" }, // LCS 26 & VCS 30
   {0x109, 0, "Feed the Fishes!",                       "Drown" }, // not working when in car
   {0x10A, 0, "Grand Theft Auto!",                      "Find and deliver all wanted Vehicles" },
+  {0x10B, 0, "Rampage!",                               "Complete all Rampages" },
   
   
   /// LCS only //////////////
@@ -310,6 +313,11 @@ void trophy() {
         
         case 0x10A: /// "Grand Theft Auto" 
           if( getInt(global_exportedVehicles + (LCS ? 0 : gp)) > 0 && (getInt(global_exportedVehicles + (LCS ? 0 : gp)) == getInt(global_exportVehicTotal + (LCS ? 0 : gp))) ) { 
+            trophies[i].unlocked = 2; // unlocked
+          } break;
+          
+        case 0x10B: /// "Rampage" 
+          if( getRampagesDone() > 0 && (getRampagesDone() == getRampagesTotal()) ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
           
@@ -1024,6 +1032,21 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
     return 1;
   }
   
+  /// rampages
+  if( _lw(addr - 0x48) == 0x3C0442C8 &&_lw(addr + 0x8) == 0x24A50001 ) { // FUN_00040f3c
+    /*******************************************************************
+    * 0x00040F3C: 0x3C040036 '6..<' - lui        $a0, 0x36
+    * 0x00040F40: 0x8C85A2FC '....' - lw         $a1, -23812($a0)
+    *******************************************************************/
+    global_rampagesdone = (_lh(addr) * 0x10000) + (int16_t)_lh(addr + 0x4); // 
+    global_rampagestotal = global_rampagesdone + 0xC; // 
+    #ifdef LOG
+    logPrintf("0x%08X (0x%08X) -> global_rampagesdone", global_rampagesdone-text_addr, global_rampagesdone); // DAT_0035a2fc_STAT_RampagesDone
+    logPrintf("0x%08X (0x%08X) -> global_rampagestotal", global_rampagestotal-text_addr, global_rampagestotal); // DAT_0035a308_STAT_RampagesTotal
+    #endif
+    return 1;
+  }
+  
   return 0;
 }
 
@@ -1292,9 +1315,13 @@ int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
     *******************************************************************/
     global_usjdone = (int16_t) _lh(addr); // WITHOUT GP!!
     global_usjtotal = (int16_t) _lh(addr+0x4); // WITHOUT GP!!
+    global_rampagesdone = (int16_t) _lh(addr+0x4C); // WITHOUT GP!!
+    global_rampagestotal = (int16_t) _lh(addr+0x50); // WITHOUT GP!!
     #ifdef LOG
     logPrintf("0x%08X --> global_usjdone", global_usjdone); // piGp00001fac
     logPrintf("0x%08X --> global_usjtotal", global_usjtotal); // iGp00001fb0
+    logPrintf("0x%08X --> global_rampagesdone", global_rampagesdone); // piGp000024a0
+    logPrintf("0x%08X --> global_rampagestotal", global_rampagestotal); // iGp000024a4
     #endif
     return 1;
   }

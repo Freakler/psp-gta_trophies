@@ -38,5 +38,7 @@ int getUsjTotal();
 int getPedDrowning(int ped_base_adr);
 float getPedHealth(int ped_base_adr);
 int getKilledHitmen();
+int getRampagesDone();
+int getRampagesTotal();
 
 #endif

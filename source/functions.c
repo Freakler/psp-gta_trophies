@@ -59,6 +59,8 @@ extern u32 global_usjdone;
 extern u32 global_usjtotal;
 
 extern u32 global_hitmankilled;
+extern u32 global_rampagesdone;
+extern u32 global_rampagestotal;
 
 
 int getGametime() {
@@ -175,6 +177,12 @@ int getPedDrowning(int ped_base_adr) { // not in car!
 float getPedHealth(int ped_base_adr) {
   return getFloat(ped_base_adr + (LCS ? 0x4B8 : 0x4E4));
 }
-int getKilledHitmen() {
+int getKilledHitmen() { // LCS only
   return getInt(global_hitmankilled);
+}
+int getRampagesDone() {
+  return getInt(global_rampagesdone + (LCS ? 0 : gp));
+}
+int getRampagesTotal() {
+  return getInt(global_rampagestotal + (LCS ? 0 : gp));
 }
