@@ -57,10 +57,15 @@ extern u32 var_garageslotsize;
 
 extern u32 global_usjdone;
 extern u32 global_usjtotal;
+extern u32 global_exportedVehicles;
+extern u32 global_exportVehicTotal;
 
 extern u32 global_hitmankilled;
 extern u32 global_rampagesdone;
 extern u32 global_rampagestotal;
+extern u32 global_hiddenpkgfound;
+extern u32 global_bikessold;
+extern u32 global_balloonsburst;
 
 
 int getGametime() {
@@ -167,6 +172,13 @@ int getUsjTotal() {
   return getInt(global_usjtotal + (LCS ? 0 : gp));
 }
 
+int getExportVehiclesDone() {
+  return getInt(global_exportedVehicles + (LCS ? 0 : gp));
+}
+int getExportVehiclesTotal() {
+  return getInt(global_exportVehicTotal + (LCS ? 0 : gp));
+}
+
 int getPedDrowning(int ped_base_adr) { // not in car!
   if( LCS ) 
     return (getInt(ped_base_adr + 0x19c) & 0x10000) != 0;
@@ -185,4 +197,13 @@ int getRampagesDone() {
 }
 int getRampagesTotal() {
   return getInt(global_rampagestotal + (LCS ? 0 : gp));
+}
+int getHiddenPackagesFound() { // LCS only
+  return getInt(global_rampagestotal); 
+}
+int getBikesSold() { // LCS only
+  return getInt(global_bikessold);
+}
+short getBalloonsBurst() { // VCS only
+  return getShort(global_balloonsburst + gp);
 }

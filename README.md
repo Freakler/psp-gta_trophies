@@ -15,6 +15,7 @@ Put gta_trophies.prx to "/seplugins/" folder and add "ms0:seplugins/gta_trophies
 ## ToDo List
 - controls only when actually inside menu (VCS)
 - fix text width "trophies" in Pause menu (VCS)
+- make "Trophies" text work for PSP/Vita too
 
 ## more Trophy-Ideas List
 - make 30 second wheele
@@ -28,8 +29,6 @@ Put gta_trophies.prx to "/seplugins/" folder and add "ms0:seplugins/gta_trophies
 - survive with 5% health for 1 minute
 - Complete Mission "XYZ"
 - evade 500 police stars
-- all Rampages
-- all hidden packages / all baloons
 - X fares with taxi / X pizza/noodles delivered
 - X travel distance 
 - jump into apartment (VCS)

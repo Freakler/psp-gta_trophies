@@ -80,6 +80,9 @@ u32 global_exportVehicTotal = -1;
 u32 global_hitmankilled     = -1;
 u32 global_rampagesdone     = -1;
 u32 global_rampagestotal    = -1;
+u32 global_hiddenpkgfound   = -1;
+u32 global_bikessold        = -1;
+u32 global_balloonsburst    = -1;
 
 u32 global_helpbox                = -1; // VCS only
 u32 global_helpbox_string         = -1; // LCS only
@@ -114,6 +117,8 @@ trophies_pack trophies[] = {
   {0x202, 0, "Crusher!",                               "Crush a total of 20 vehicles at the junkyard" },
   {0x203, 0, "Killer by the dozen!",                   "Whack 12 of Ma's Hitmen before they do you" },
   {0x204, 0, "Sleeping with Angels!",                  "Pay JD a visit" },
+  {0x205, 0, "Found them all!",                        "Collect all 100 hidden packages in Liberty City" },
+  {0x206, 0, "Bikesalesman!",                          "Sell all 40 bikes to customers" },
   
   
   /// VCS only //////////////
@@ -122,6 +127,7 @@ trophies_pack trophies[] = {
   {0x302, 0, "In the skies!",                          "Fly higher than the game's limit" }, // 
   {0x303, 0, "Fun Ride!",                              "Use the Ferris wheel" }, // 
   {0x304, 0, "Empire much!",                           "Acquire all Business sites" }, // 
+  {0x305, 0, "Big Poppa!",                             "Burst all 99 balloons scattered around Vice City" }, // 
 
   
 }; int trophies_size = (sizeof(trophies)/sizeof(trophies_pack));
@@ -307,12 +313,12 @@ void trophy() {
           } break;
         
         case 0x109: /// "Drown" 
-          if( getPedDrowning(pplayer) && getPedHealth(pplayer) == 0.0f ) { 
+          if( getPedDrowning(pplayer) && getPedHealth(pplayer) <= 1.0f ) { // 1% health
             trophies[i].unlocked = 2; // unlocked
           } break;
         
         case 0x10A: /// "Grand Theft Auto" 
-          if( getInt(global_exportedVehicles + (LCS ? 0 : gp)) > 0 && (getInt(global_exportedVehicles + (LCS ? 0 : gp)) == getInt(global_exportVehicTotal + (LCS ? 0 : gp))) ) { 
+          if( getExportVehiclesDone() > 0 && (getExportVehiclesDone() == getExportVehiclesTotal()) ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
           
@@ -321,6 +327,7 @@ void trophy() {
             trophies[i].unlocked = 2; // unlocked
           } break;
           
+		  
         
         /// LCS only //////////////
     
@@ -349,7 +356,18 @@ void trophy() {
             trophies[i].unlocked = 2; // unlocked
           } break;
         
+        case 0x205: /// "Found them all"
+          if( LCS && getHiddenPackagesFound() == 100 ) { 
+            trophies[i].unlocked = 2; // unlocked
+          } break;
         
+        case 0x206: /// "Bikesalesman"
+          if( LCS &&  getBikesSold() == 40 ) { 
+            trophies[i].unlocked = 2; // unlocked
+          } break;
+        
+        
+		
         /// VCS only //////////////
         
         case 0x300: /// "There are no Easter Eggs up here. Go away"
@@ -374,6 +392,11 @@ void trophy() {
         
         case 0x304: /// "Empire much"
           if( VCS && getNumberEmpiresOwned() == 30 ) {
+            trophies[i].unlocked = 2; // unlocked
+          } break;
+        
+		case 0x305: /// "Big Poppa"
+          if( LCS && getBalloonsBurst() == 99 ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
         
@@ -567,8 +590,8 @@ void DrawBrief_patched(int param_1) {
       SetDropShadowPosition(0);
       
       /// draw title
-      SetFontStyle(0); // 2
-      SetScale_LCS(0.36432,0.792);
+      SetFontStyle(2); // 0
+      SetScale_LCS(0.4,0.8); //0.36432,0.792
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
       color = adjustColorLCS(color, 65.0f + position + cur);
       SetColor(&color);
@@ -987,23 +1010,7 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
     
     return 1;
   }
-  
-  
-  /// stuntjumps
-  if( _lw(addr + 0xC0) == 0x34060008 &&_lw(addr + 0x18) == 0x26050018 && _lw(addr + 0x8) == 0x24A50001   ) { // 0x00220698
-    /*******************************************************************
-    * 0x00220698: 0x3C040036 '6..<' - lui        $a0, 0x36
-    * 0x0022069C: 0x8C85A2B4 '....' - lw         $a1, -23884($a0)
-    *******************************************************************/
-    global_usjdone = (_lh(addr) * 0x10000) + (int16_t)_lh(addr + 0x4); // 
-    global_usjtotal = global_usjdone + 0x4; // 
-    #ifdef LOG
-    logPrintf("0x%08X (0x%08X) -> global_usjdone", global_usjdone-text_addr, global_usjdone); // DAT_0035a2b4_STAT_USJs_done
-    logPrintf("0x%08X (0x%08X) -> global_usjtotal", global_usjtotal-text_addr, global_usjtotal); // DAT_0035a2b8_USJs_total
-    #endif
-    return 1;
-  }
-  
+    
   /// exported vehicles
   if( _lw(addr - 0x18) == 0x26250018 &&_lw(addr + 0x54) == 0x34060002 && _lw(addr + 0x114) == 0x3406000A   ) { // 0x0005ED44
     /*******************************************************************
@@ -1043,6 +1050,40 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
     #ifdef LOG
     logPrintf("0x%08X (0x%08X) -> global_rampagesdone", global_rampagesdone-text_addr, global_rampagesdone); // DAT_0035a2fc_STAT_RampagesDone
     logPrintf("0x%08X (0x%08X) -> global_rampagestotal", global_rampagestotal-text_addr, global_rampagestotal); // DAT_0035a308_STAT_RampagesTotal
+    #endif
+    return 1;
+  }
+  
+  /// hiddenpackages & bikes sold & stunt jumps
+  if( _lw(addr - 0x70) == 0xA6000214 &&_lw(addr + 0x24) == 0x24A50001 ) { // 0x00179450
+    /*******************************************************************
+    * 0x00179450: 0x3C060038 '8..<' - lui        $a2, 0x38
+	* 0x00179454: 0x24C65B10 '.[.$' - addiu      $a2, $a2, 23312
+    * 0x0017945C: 0xAC8500C4 '....' - sw         $a1, 196($a0)
+    *******************************************************************/
+    global_hiddenpkgfound = (_lh(addr) * 0x10000) + (int16_t)_lh(addr + 0x4) + (int16_t)_lh(addr + 0xC); // DAT_00385bd4_hiddenPackagesFound
+	#ifdef LOG
+    logPrintf("0x%08X (0x%08X) -> global_hiddenpkgfound", global_hiddenpkgfound-text_addr, global_hiddenpkgfound); // DAT_00385bd4_hiddenPackagesFound
+    #endif
+	
+    /*******************************************************************
+    * 0x00179468: 0x3C040036 '6..<' - lui        $a0, 0x36
+    * 0x0017946C: 0x8C85A3C4 '....' - lw         $a1, -23612($a0)
+    *******************************************************************/	
+    global_bikessold = (_lh(addr+0x18) * 0x10000) + (int16_t)_lh(addr + 0x1C); // DAT_0035a3c4_STAT_BikesSold
+    #ifdef LOG
+    logPrintf("0x%08X (0x%08X) -> global_bikessold", global_bikessold-text_addr, global_bikessold); // DAT_0035a3c4_STAT_BikesSold
+    #endif
+	
+	/*******************************************************************
+    * 0x00179408: 0x3C050036 '6..<' - lui        $a1, 0x36
+    * 0x0017940C: 0xACA4A2B4 '....' - sw         $a0, -23884($a1)
+    *******************************************************************/
+    global_usjdone = (_lh(addr - 0x48) * 0x10000) + (int16_t)_lh(addr - 0x44); // 
+    global_usjtotal = global_usjdone + 0x4; // 
+    #ifdef LOG
+    logPrintf("0x%08X (0x%08X) -> global_usjdone", global_usjdone-text_addr, global_usjdone); // DAT_0035a2b4_STAT_USJs_done
+    logPrintf("0x%08X (0x%08X) -> global_usjtotal", global_usjtotal-text_addr, global_usjtotal); // DAT_0035a2b8_USJs_total
     #endif
     return 1;
   }
@@ -1279,7 +1320,7 @@ int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
   
 
   
-    /// global_garagedata
+  /// global_garagedata
   if( _lw(addr - 0x10) == 0x2404FFFF && _lw(addr + 0x3C) == 0x24C60030 ) {  // 0x46F9B0
     /*******************************************************************
      *  0x00168E80: 0x3C050047 'G..<' - lui        $a1, 0x47
@@ -1308,6 +1349,7 @@ int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
     return 1;
   }
   
+  /// STATS reset location
   if( _lw(addr - 0x54) == 0x29AE0017 && _lw(addr + 0xA8) == 0x24840004  ) { // 0x0018D870
     /*******************************************************************
      *  0x0018D870: 0xAF801FAC '....' - sw         $zr, 8108($gp)
@@ -1330,12 +1372,14 @@ int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
      *  0x0018DA80: 0xA3802078 'x ..' - sb         $zr, 8312($gp)
     *******************************************************************/
     global_empireowned = (int16_t) _lh(addr); // WITHOUT GP!!
+	global_balloonsburst = (int16_t) _lh(addr+0x50); // WITHOUT GP!!
     global_exportedVehicles = (int16_t) _lh(addr+0x58); // WITHOUT GP!!
     global_exportVehicTotal = (int16_t) _lh(addr+0x5C); // WITHOUT GP!!
-    #ifdef LOG
+	#ifdef LOG
     logPrintf("0x%08X --> global_empireowned", global_empireowned); // uGp00002078
     logPrintf("0x%08X --> global_exportedVehicles", global_exportedVehicles); // piGp00001fd4
     logPrintf("0x%08X --> global_exportVehicTotal", global_exportVehicTotal); // iGp00001fd8
+	logPrintf("0x%08X --> global_balloonsburst", global_balloonsburst); // uGp00001fdc
     #endif
     return 1;
   }

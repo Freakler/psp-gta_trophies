@@ -35,10 +35,15 @@ void CustomScriptExecute(int address);
 int getCarsCrushed();
 int getUsjDone();
 int getUsjTotal();
+int getExportVehiclesDone();
+int getExportVehiclesTotal();
 int getPedDrowning(int ped_base_adr);
 float getPedHealth(int ped_base_adr);
 int getKilledHitmen();
 int getRampagesDone();
 int getRampagesTotal();
+int getHiddenPackagesFound();
+int getBikesSold();
+short getBalloonsBurst();
 
 #endif

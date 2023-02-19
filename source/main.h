@@ -20,7 +20,7 @@
 #define __MAIN_H__
 
 /** FLAGS ***********/
-#define LOG
+//#define LOG
 //#define DEBUG
 
 /********************/
