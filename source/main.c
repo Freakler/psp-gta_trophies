@@ -51,6 +51,18 @@ int PPSSPP = 0, LCS = 0, VCS = 0;
 char save[128], *ptr;
 char buffer[256]; // string buffer
 
+int (* buttonsToAction)(void *a1);
+int buttonsToActionPatched(void *a1);
+void check_button_reset();
+void trophies_reset();
+
+int press_again = 1;
+
+SceCtrlData pad;
+int hold_n = 0;
+u32 old_buttons = 0, current_buttons = 0, pressed_buttons = 0, hold_buttons = 0, lx, ly, rx, ry;
+float xstick, ystick;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int pplayer = 0;
@@ -58,6 +70,7 @@ int pcar = 0;
 int pobj = 0;
 short pcar_id = 0;
 int gametimer = 0;
+int press_again_timer = 0;
 int island = 0;
 int multiplayer = 0;
 
@@ -169,14 +182,25 @@ int sceKernelSysClock2USecWidePatched(SceInt64 clock, unsigned *low, unsigned in
 
   /// is multiplayer active
   multiplayer = getMultiplayer();
-  
-  
+
   /// check for and trigger trophies
   if( gametimer >= 4000 && !multiplayer ) { // wait ~2 seconds before checking
     if( trophies_getDoneCurrentGame() != trophies_getTotalCurrentGame() ) {
       trophy();
     } else {
       congrats();
+    }
+    // Reset Trophies, check if player unlocked any trophies yet
+    if ( trophies_getDoneCurrentGame() != 0 ) {
+      // Pressing a button?
+      if (pad.Buttons) {
+        // If so, check if pressing the L + R + SELECT combo
+        check_button_reset();
+      }
+      // Else, check if it has passed 5 seconds since the timebox appeared (restart press again clock)
+      else if ((sceKernelGetSystemTimeWide() > (press_again_timer + 5 * 1000000)) && press_again == 0) {
+        press_again = 1;
+      }
     }
   }
   
@@ -188,15 +212,65 @@ int sceKernelSysClock2USecWidePatched(SceInt64 clock, unsigned *low, unsigned in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void check_button_reset() {
+  // I'm sure there's better ways to check a combo of buttons
+  if ((pad.Buttons & PSP_CTRL_LTRIGGER) && current_buttons != old_buttons) {
+    if ((pad.Buttons & PSP_CTRL_RTRIGGER)) {
+      if ((pad.Buttons & PSP_CTRL_SELECT)) {
+        // Display warning message to avoid acidental reset
+        if (press_again == 1) {
+          setTimedTextbox("Press ~h~L + R + SELECT~w~ again to reset your trophies!", 5.00f);
+          press_again_timer = sceKernelGetSystemTimeWide();
+          press_again = 0;
+        }
+        // Player pressed the combo twice
+        else {
+          // Trigger Trophy Reset
+          trophies_reset();
+          // Reset press again bool in case the player wants to trigger the reset again later (is it even needed?)
+          press_again = 1;
+        }
+      }
+    }
+  }
+}
 
-// Unused for now
+int buttonsToActionPatched(void *a1) { //LCS & VCS
+	int res = buttonsToAction(a1);
+	 
+	///////////////////////////////////////////
+	sceCtrlPeekBufferPositive(&pad, 1);
+	
+	xstick = (float)(pad.Lx - 128) / (float)128; 
+	ystick = (float)(pad.Ly - 128) / (float)128;
+			
+	old_buttons = current_buttons;
+	current_buttons = pad.Buttons;
+	pressed_buttons = current_buttons & ~old_buttons;
+	hold_buttons = pressed_buttons;
+
+	if (old_buttons & current_buttons) {
+		if (hold_n >= 10) {
+			hold_buttons = current_buttons;
+			hold_n = 8;
+		} hold_n++;
+	} else hold_n = 0;
+	///////////////////////////////////////////
+
+	return res;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 void trophies_reset() {
   int i;
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
     trophies[i].unlocked = 0; // lock
     //trophies[i].value = 0; // zero value
   }
-  setTimedTextbox("Trophies have been reset!", 7.00f);
+  setTimedTextbox("All trophies have been ~h~reset!", 5.00f);
+  saveprogress();
 }
 
 int trophies_getTotal() {
@@ -510,11 +584,6 @@ void DrawBrief_patched(int param_1) {
   if( VCS && getInt(getInt(param_1)) != 0x65697242 ) // check if is "Brief_Scroll_Titles" (beacause for VCS this func also draws Stats!)
     return DrawBrief(param_1); // draw vcs stats, maybe more
   
-  memset(&pad, 0, sizeof(SceCtrlData));
-  sceCtrlPeekBufferPositive(&pad, 1);
-  u32 buttons = pad.Buttons;
-  static u32 old_buttons = 0;
-  float ystick = (float)(pad.Ly - 128) / (float)128;
   
   static int mode = 1; // 1 / ON / Show all
   u32 color;
@@ -591,7 +660,7 @@ void DrawBrief_patched(int param_1) {
       
       /// draw title
       SetFontStyle(2); // 0
-      SetScale_LCS(0.4,0.8); //0.36432,0.792
+      SetScale_LCS(0.4, 0.95); //0.36432,0.792
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
       color = adjustColorLCS(color, 65.0f + position + cur);
       SetColor(&color);
@@ -601,12 +670,13 @@ void DrawBrief_patched(int param_1) {
       
       /// draw dec
       SetFontStyle(1);
+      SetScale_LCS(0.4, 0.8); //0.36432,0.792
       color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
       color = adjustColorLCS(color, 80.0f + position + cur); // WHITE
       SetColor(&color);
       sprintf(string, "%s", trophies[i].desc);
       AsciiToUnicode(string, str);
-      PrintString_LCS(15.0f, 80.0f + position + cur, str, 0);
+      PrintString_LCS(15.0f, 82.0f + position + cur, str, 0);
       
       cur+=42.0f;
     }
@@ -651,7 +721,7 @@ void DrawBrief_patched(int param_1) {
         position -= 3.0f;
     }
   
-    if( old_buttons != buttons && pad.Buttons & PSP_CTRL_CROSS ) {
+    if( old_buttons != pad.Buttons && pad.Buttons & PSP_CTRL_CROSS ) {
       mode = 1 - mode;
       position = 0.0f; // reset scroll
     }
@@ -661,7 +731,7 @@ void DrawBrief_patched(int param_1) {
   if( -position > cur-145.0f ) position = (cur - 145.0f) * -1;
   
   }
-  old_buttons = buttons;
+  old_buttons = pad.Buttons;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -673,6 +743,8 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
     
     SetHelpMessage = (void*)(0x182ae0);
     IsHelpMessageBeingDisplayed = (void*)(0x0182ca0);
+
+    HIJACK_FUNCTION(text_addr + 0x00294E88, buttonsToActionPatched, buttonsToAction); //for button input
 
     ///////////////
   
@@ -1097,6 +1169,8 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
 int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
   
   if( VCS && patchonce ) { //FOR TESTING ONLY
+
+  HIJACK_FUNCTION(text_addr + 0x0018A288, buttonsToActionPatched, buttonsToAction); //
   
   //logPrintf("patchonce");
   
