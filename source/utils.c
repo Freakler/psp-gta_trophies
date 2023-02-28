@@ -73,6 +73,11 @@ int doesFileExist(const char* path) {
    return 0; // false
 } 
 
+int getHighMemBound() { // thx Acid_Snake :)
+  SceUID block = sceKernelAllocPartitionMemory(2, "test", PSP_SMEM_High, 100, NULL);
+  return (int)sceKernelGetBlockHeadAddr(block)+0x100;
+}
+
 int checkCoordinateInsideArea(float a, float b, float c, float x, float y, float z, float radius) {
   // logPrintf("%f %f", a, x);
   if( sqrt(pow(a-x, 2) + pow(b-y, 2) + pow(c-z, 2)) <= radius ) // Let the sphere's centre coordinates be (x,y,z) and its radius r, then point (a,b,c) is in the sphere if (a−x)^2 + (b−y)^2 + (c−z)^2 < r^2.
@@ -83,7 +88,7 @@ int checkCoordinateInsideArea(float a, float b, float c, float x, float y, float
 //////////////////////////////////////////////////////////////////////////////////////////
 
 u32 memory_low  = 0x08400000; // memory bounds
-u32 memory_high = 0x0C000000; // (high mem. hardcoded = bad, TODO!)
+u32 memory_high = 0x0A000000; // 
 
 void setByte(int adr, unsigned char value) { // 8bit (unsigned 0-255)
   if( adr >= memory_low && adr < memory_high )

@@ -25,6 +25,8 @@ int doesFileExist(const char* path);
 void AsciiToUnicode(const char* in, wchar_t* out);
 int wcscmp(const wchar_t *s1, const wchar_t *s2);
 
+int getHighMemBound();
+
 int checkCoordinateInsideArea(float a, float b, float c, float x, float y, float z, float radius);
 
 /////////////////////////////////////

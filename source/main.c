@@ -51,6 +51,8 @@ int PPSSPP = 0, LCS = 0, VCS = 0;
 char save[128], *ptr;
 char buffer[256]; // string buffer
 
+extern u32 memory_high;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int pplayer = 0;
@@ -1602,6 +1604,14 @@ int module_start(SceSize argc, void* argp) {
     #endif
   }
 
+
+  /// check available memory (high memory layout)
+  memory_high = getHighMemBound();
+  #ifdef LOG
+  logPrintf("[INFO] memory_high = 0x%08X", memory_high);
+  #endif
+  
+  
   /// savefile
   if(argc > 0) { // on real hardware we use module_start's argp path to put the savefile next to the prx
     /// location depending on where prx is loaded from
