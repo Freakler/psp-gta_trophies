@@ -189,19 +189,20 @@ int sceKernelSysClock2USecWidePatched(SceInt64 clock, unsigned *low, unsigned in
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// Unused for now
 void trophies_reset() {
   int i;
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
     trophies[i].unlocked = 0; // lock
     //trophies[i].value = 0; // zero value
   }
-  setTimedTextbox("Trophies have been reset!", 7.00f);
+  sceIoRemove(save);
+  //setTimedTextbox("All trophies have been ~h~reset!", 5.00f);
 }
 
 int trophies_getTotal() {
   return trophies_size;  
 }
+
 int trophies_getTotalCurrentGame() {
   int i, counter = 0;
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
@@ -214,6 +215,7 @@ int trophies_getTotalCurrentGame() {
   }
   return counter;
 }
+
 int trophies_getDoneTotal() {
   int i, counter = 0;
   for( i = 0; i < trophies_size; i++ ) // loop trophies list
@@ -221,6 +223,7 @@ int trophies_getDoneTotal() {
       counter++;
   return counter;
 }
+
 int trophies_getDoneCurrentGame() {
   int i, counter = 0;
   for( i = 0; i < trophies_size; i++ ) { // loop trophies list
@@ -516,6 +519,8 @@ void DrawBrief_patched(int param_1) {
   static u32 old_buttons = 0;
   float ystick = (float)(pad.Ly - 128) / (float)128;
   
+  static int timer = 0, resetdialog = 0;
+  
   static int mode = 1; // 1 / ON / Show all
   u32 color;
   wchar_t str[128] = L" ";
@@ -567,6 +572,7 @@ void DrawBrief_patched(int param_1) {
     PrintString_VCS(str, SCREEN_WIDTH, 50.0f);
   }
   
+  
   /// DEBUG
   /*sprintf(string, "pos: %.02f, mode: %d, addr_scrollval: %.02f, ystick: %.02f", position, mode, getFloat(addr_scrollval), ystick);
   AsciiToUnicode(string, str);
@@ -575,6 +581,49 @@ void DrawBrief_patched(int param_1) {
   if( LCS ) PrintString_LCS(480.0 -13.0, 20.0, str, 0);
   if( VCS ) PrintString_VCS(str, SCREEN_WIDTH, 20.0);*/
   
+  
+  /// Reset Dialog
+  if( resetdialog ) {
+    sprintf(string, "Do you really want to reset your trophies?");
+	AsciiToUnicode(string, str);
+	color = 0xFFFFFFFF; // white
+    SetColor(&color);
+	SetFontStyle(1);
+	if( LCS ) {
+      SetPropOn();
+	  SetScale_LCS(0.4, 0.8);
+	  SetCentreOn();
+	  SetRightJustifyWrap(0.0f);
+	  SetWrapx(SCREEN_WIDTH);
+	  PrintString_LCS(SCREEN_WIDTH/2, 100.0f, str, 0);
+	  PrintString_LCS(SCREEN_WIDTH/2, 125.0f, L"X = Yes     O = No", 0);
+    }
+    if( VCS ) {
+      SetScale_VCS(0.5f);
+	  SetTextOriginPoint(2); //screen center
+      PrintString_VCS(str, 0, 100.0f);
+      PrintString_VCS(L"~X~ Yes     ~O~ No", 0, 125.0f);
+    }
+    
+    /// Controls
+    if( pad.Buttons & PSP_CTRL_SELECT ) { // select still pressed?
+      if( old_buttons != buttons ) {
+        if( pad.Buttons & PSP_CTRL_CROSS ) {
+          resetdialog = 0;
+          mode = 1;
+		  buttons = 0;
+          position = 0.0f; // reset scroll
+          trophies_reset();
+        }
+        if( pad.Buttons & PSP_CTRL_CIRCLE ) {
+          resetdialog = 0;
+		  buttons = 0;
+        }
+      }
+    } else resetdialog = 0;
+    old_buttons = buttons;
+    return;
+  }
   
   /// Trophy Texts
   int i;
@@ -591,8 +640,8 @@ void DrawBrief_patched(int param_1) {
       
       /// draw title
       SetFontStyle(2); // 0
-      SetScale_LCS(0.4,0.8); //0.36432,0.792
-      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
+      SetScale_LCS(0.4, 0.95); // 0.36432,0.792
+      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF; // GREEN else WHITE
       color = adjustColorLCS(color, 65.0f + position + cur);
       SetColor(&color);
       sprintf(string, "%s", trophies[i].title);
@@ -601,12 +650,13 @@ void DrawBrief_patched(int param_1) {
       
       /// draw dec
       SetFontStyle(1);
-      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
+      SetScale_LCS(0.4, 0.8); // 0.36432,0.792
+      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF; // GREEN else WHITE
       color = adjustColorLCS(color, 80.0f + position + cur); // WHITE
       SetColor(&color);
       sprintf(string, "%s", trophies[i].desc);
       AsciiToUnicode(string, str);
-      PrintString_LCS(15.0f, 80.0f + position + cur, str, 0);
+      PrintString_LCS(15.0f, 82.0f + position + cur, str, 0);
       
       cur+=42.0f;
     }
@@ -616,9 +666,9 @@ void DrawBrief_patched(int param_1) {
       SetTextOriginPoint(3); // left
         
       /// draw Title
-      SetFontStyle(2); //SetFontStyle(0);
-      SetScale_VCS(0.35f); //SetScale_VCS(0.7f);
-      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFEEEEEE;  //GREEN else WHITE (grayish)
+      SetFontStyle(2); // SetFontStyle(0);
+      SetScale_VCS(0.35f); // SetScale_VCS(0.7f);
+      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFEEEEEE; // GREEN else WHITE (grayish)
       color = adjustColorVCS(color, 75.0f + position + cur);
       SetColor(&color);
       sprintf(string, "%s", trophies[i].title);
@@ -628,7 +678,7 @@ void DrawBrief_patched(int param_1) {
       /// draw dec
       SetFontStyle(1);
       SetScale_VCS(0.5f);
-      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF;  //GREEN else WHITE
+      color = (trophies[i].unlocked > 0) ? 0xFF00FF00 : 0xFFFFFFFF; // GREEN else WHITE
       color = adjustColorVCS(color, 92.0f + position + cur); // WHITE
       SetColor(&color);
       sprintf(string, "%s", trophies[i].desc);
@@ -640,7 +690,7 @@ void DrawBrief_patched(int param_1) {
   }
   
   /// Controls
-  if( (getFloat(addr_scrollval) != 0.0f) || VCS ) { // if this float is set, the user is pressing a button (LCS!)
+  if( (getFloat(addr_scrollval) != 0.0f) || VCS ) { // if this float is set, the user is pressing UP/DOWN/CROSS/Analog (LCS!)
     if( pad.Buttons & PSP_CTRL_DOWN ) {
       if( position < 0.00f )
         position += 3.0f;
@@ -661,10 +711,21 @@ void DrawBrief_patched(int param_1) {
   if( -position > cur-145.0f ) position = (cur - 145.0f) * -1;
   
   }
+  
+  if( pad.Buttons & PSP_CTRL_SELECT ) { // reset "combo"
+    if( old_buttons != buttons ) {
+      timer = sceKernelGetSystemTimeWide();
+    }
+    if( sceKernelGetSystemTimeWide() > (timer + 5 * 1000000) ) { // 5 seconds
+      resetdialog = 1;
+    }
+  }
+  
   old_buttons = buttons;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int patchonce = 1; 
 
 int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
@@ -1058,24 +1119,24 @@ int PatchLCS(u32 addr, u32 text_addr) { //Liberty City Stories
   if( _lw(addr - 0x70) == 0xA6000214 &&_lw(addr + 0x24) == 0x24A50001 ) { // 0x00179450
     /*******************************************************************
     * 0x00179450: 0x3C060038 '8..<' - lui        $a2, 0x38
-	* 0x00179454: 0x24C65B10 '.[.$' - addiu      $a2, $a2, 23312
+  * 0x00179454: 0x24C65B10 '.[.$' - addiu      $a2, $a2, 23312
     * 0x0017945C: 0xAC8500C4 '....' - sw         $a1, 196($a0)
     *******************************************************************/
     global_hiddenpkgfound = (_lh(addr) * 0x10000) + (int16_t)_lh(addr + 0x4) + (int16_t)_lh(addr + 0xC); // DAT_00385bd4_hiddenPackagesFound
-	#ifdef LOG
+  #ifdef LOG
     logPrintf("0x%08X (0x%08X) -> global_hiddenpkgfound", global_hiddenpkgfound-text_addr, global_hiddenpkgfound); // DAT_00385bd4_hiddenPackagesFound
     #endif
-	
+  
     /*******************************************************************
     * 0x00179468: 0x3C040036 '6..<' - lui        $a0, 0x36
     * 0x0017946C: 0x8C85A3C4 '....' - lw         $a1, -23612($a0)
-    *******************************************************************/	
+    *******************************************************************/  
     global_bikessold = (_lh(addr+0x18) * 0x10000) + (int16_t)_lh(addr + 0x1C); // DAT_0035a3c4_STAT_BikesSold
     #ifdef LOG
     logPrintf("0x%08X (0x%08X) -> global_bikessold", global_bikessold-text_addr, global_bikessold); // DAT_0035a3c4_STAT_BikesSold
     #endif
-	
-	/*******************************************************************
+  
+  /*******************************************************************
     * 0x00179408: 0x3C050036 '6..<' - lui        $a1, 0x36
     * 0x0017940C: 0xACA4A2B4 '....' - sw         $a0, -23884($a1)
     *******************************************************************/
@@ -1372,14 +1433,14 @@ int PatchVCS(u32 addr, u32 text_addr) { // Vice City Stories
      *  0x0018DA80: 0xA3802078 'x ..' - sb         $zr, 8312($gp)
     *******************************************************************/
     global_empireowned = (int16_t) _lh(addr); // WITHOUT GP!!
-	global_balloonsburst = (int16_t) _lh(addr+0x50); // WITHOUT GP!!
+  global_balloonsburst = (int16_t) _lh(addr+0x50); // WITHOUT GP!!
     global_exportedVehicles = (int16_t) _lh(addr+0x58); // WITHOUT GP!!
     global_exportVehicTotal = (int16_t) _lh(addr+0x5C); // WITHOUT GP!!
-	#ifdef LOG
+  #ifdef LOG
     logPrintf("0x%08X --> global_empireowned", global_empireowned); // uGp00002078
     logPrintf("0x%08X --> global_exportedVehicles", global_exportedVehicles); // piGp00001fd4
     logPrintf("0x%08X --> global_exportVehicTotal", global_exportVehicTotal); // iGp00001fd8
-	logPrintf("0x%08X --> global_balloonsburst", global_balloonsburst); // uGp00001fdc
+  logPrintf("0x%08X --> global_balloonsburst", global_balloonsburst); // uGp00001fdc
     #endif
     return 1;
   }
