@@ -75,7 +75,9 @@ int doesFileExist(const char* path) {
 
 int getHighMemBound() { // thx Acid_Snake :)
   SceUID block = sceKernelAllocPartitionMemory(2, "test", PSP_SMEM_High, 100, NULL);
-  return (int)sceKernelGetBlockHeadAddr(block)+0x100;
+  int address = (int)sceKernelGetBlockHeadAddr(block)+0x100;
+  sceKernelFreePartitionMemory(block);
+  return address;
 }
 
 int checkCoordinateInsideArea(float a, float b, float c, float x, float y, float z, float radius) {
