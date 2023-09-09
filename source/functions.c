@@ -199,7 +199,7 @@ int getRampagesTotal() {
   return getInt(global_rampagestotal + (LCS ? 0 : gp));
 }
 int getHiddenPackagesFound() { // LCS only
-  return getInt(global_rampagestotal); 
+  return getInt(global_hiddenpkgfound); 
 }
 int getBikesSold() { // LCS only
   return getInt(global_bikessold);
