@@ -181,9 +181,9 @@ int getExportVehiclesTotal() {
 
 int getPedDrowning(int ped_base_adr) { // not in car!
   if( LCS ) 
-    return (getInt(ped_base_adr + 0x19c) & 0x10000) != 0;
-  if( VCS ) 
-    return getInt(ped_base_adr + 0x8b4) == 0x44; // 0x3A if drowned ?! 
+    return (getInt(ped_base_adr + 0x19c) & 0x10000) != 0; // 0526: is_char_drowning_in_water
+  //if( VCS ) 
+	//return ...
   return 0;
 }
 float getPedHealth(int ped_base_adr) {

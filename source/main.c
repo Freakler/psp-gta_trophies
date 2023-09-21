@@ -108,13 +108,13 @@ trophies_pack trophies[] = {
   {0x106, 0, "Done it all!",                           "100% complete the game" }, //
   {0x107, 0, "Full house!",                            "Fill all Garages to the max" }, // Portland 1, Staunton 2, Shoreside 3 (12 max) & 101Baysh. 1, Compound 1, Clym. 3 (12 max)
   {0x108, 0, "Stuntman!",                              "Complete all Unique Stunt Jumps" }, // LCS 26 & VCS 30
-  {0x109, 0, "Feed the Fishes!",                       "Drown" }, // not working when in car
+//{0x109, 0, "Feed the Fishes!",                       "Drown" }, // todo: VCS and check when in car
   {0x10A, 0, "Grand Theft Auto!",                      "Find and deliver all wanted Vehicles" },
   {0x10B, 0, "Rampage!",                               "Complete all Rampages" },
   
   
   /// LCS only //////////////
-  {0x200, 0, "Let it Snow!",                           "Find a way to make it snow in Liberty City" }, //by finish salesman
+  {0x200, 0, "Let it Snow!",                           "Find a way to make it snow in Liberty City" }, // by finish salesman
   {0x201, 0, "Hello again!",                           "Visit the famous smiley face sign" }, // you werent supposed to get here you know
   {0x202, 0, "Crusher!",                               "Crush a total of 20 vehicles at the junkyard" },
   {0x203, 0, "Killer by the dozen!",                   "Whack 12 of Ma's Hitmen before they do you" },
@@ -298,8 +298,8 @@ void trophy() {
           } break;
         
         case 0x105: /// "No Escape" 
-          if( pobj_x < (LCS ? -1948.0f : -2080.0f) || pobj_x > (LCS ? 1948.0f : 1530.0f) || pobj_y < (LCS ? -1948.0f : -1870.0f) || pobj_y > (LCS ? 1948.0f : 1520.0f) ) { 
-            trophies[i].unlocked = 2; // unlocked
+          if( pobj_x < (LCS ? -1900.0f : -2080.0f) || pobj_x > (LCS ? 1900.0f : 1530.0f) || pobj_y < (LCS ? -1900.0f : -1870.0f) || pobj_y > (LCS ? 1900.0f : 1520.0f) ) { 
+			trophies[i].unlocked = 2; // unlocked
           } break;
        
         case 0x106: /// "Done it all" 
