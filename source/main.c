@@ -401,7 +401,7 @@ void trophy() {
           } break;
         
 		case 0x305: /// "Big Poppa"
-          if( LCS && getBalloonsBurst() == 99 ) { 
+          if( VCS && getBalloonsBurst() == 99 ) { 
             trophies[i].unlocked = 2; // unlocked
           } break;
         
